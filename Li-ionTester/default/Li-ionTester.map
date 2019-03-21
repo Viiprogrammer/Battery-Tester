@@ -597,13 +597,13 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
  .debug_frame   0x00000140       0x90 lcd_lib_2.o
  .debug_frame   0x000001d0       0x40 buttons.o
 
-.debug_str      0x00000000      0x390
+.debug_str      0x00000000      0x3bf
  *(.debug_str)
- .debug_str     0x00000000      0x2b7 Li-ionTester.o
-                                0x326 (size before relaxing)
- .debug_str     0x000002b7       0x9a lcd_lib_2.o
+ .debug_str     0x00000000      0x2ac Li-ionTester.o
+                                0x31b (size before relaxing)
+ .debug_str     0x000002ac       0xd4 lcd_lib_2.o
                                 0x1da (size before relaxing)
- .debug_str     0x00000351       0x3f buttons.o
+ .debug_str     0x00000380       0x3f buttons.o
                                 0x15a (size before relaxing)
 
 .debug_loc      0x00000000      0x6c6
