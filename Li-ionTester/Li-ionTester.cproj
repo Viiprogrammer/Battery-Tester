@@ -81,7 +81,16 @@
     <Compile Include="compilers_4.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="config.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="lcd_lib_2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="parser.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="parser.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="port_macros.h">
@@ -101,6 +110,12 @@
       </CustomCompilationSetting>
     </Compile>
     <Compile Include="buttons.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="usart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="usart.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

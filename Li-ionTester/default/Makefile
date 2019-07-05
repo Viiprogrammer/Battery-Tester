@@ -37,9 +37,11 @@ SUBDIRS :=
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
+../parser.c \
 ../Li-ionTester.c \
 ../lcd_lib_2.c \
-../buttons.c
+../buttons.c \
+../usart.c
 
 
 PREPROCESSING_SRCS += 
@@ -49,24 +51,32 @@ ASM_SRCS +=
 
 
 OBJS +=  \
+parser.o \
 Li-ionTester.o \
 lcd_lib_2.o \
-buttons.o
+buttons.o \
+usart.o
 
 OBJS_AS_ARGS +=  \
+parser.o \
 Li-ionTester.o \
 lcd_lib_2.o \
-buttons.o
+buttons.o \
+usart.o
 
 C_DEPS +=  \
+parser.d \
 Li-ionTester.d \
 lcd_lib_2.d \
-buttons.d
+buttons.d \
+usart.d
 
 C_DEPS_AS_ARGS +=  \
+parser.d \
 Li-ionTester.d \
 lcd_lib_2.d \
-buttons.d
+buttons.d \
+usart.d
 
 OUTPUT_FILE_PATH +=Li-ionTester.elf
 
@@ -82,6 +92,10 @@ LINKER_SCRIPT_DEP+=
 
 
 # AVR32/GNU C Compiler
+
+
+
+
 
 
 

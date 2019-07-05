@@ -7,15 +7,7 @@
    - Добавить защиту от переполюсовки, и индикацию неверного подключения
    - Прицепить энкодер
 */
-#define ADC_VREF_TYPE ((0<<REFS1) | (0<<REFS0) | (0<<ADLAR)) //Установка внешней опорки
-#define V_REF 4.55 //Опорка
-#define CALC_ADC_VOLTAGE(y) (int)(y/(V_REF/1023))
-#define NO_BATTERY_VALUE 0.1 //Все что ниже не считает за наличие акб
-#define CHARGE_TRIGGER_VALUE 4 //Значиние при котором считать акб заряженым (доп проверка кроме светодиода TP4056) 4V - 899
-#define CHARGE_DIALOG_VALUE 4.05 //Ниже какогого напряжения выводить предложение зарядки?
-#define BATTERY_CRITICAL_TEMP_VALUE 851
-#define CURRENT_MUX_CHANNEL 1
-#define VOLTAGE_MUX_CHANNEL 0
+
 #define soft_reset()        \
 do                          \
 {                           \
@@ -25,15 +17,10 @@ do                          \
     }                       \
 } while(0)
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <util/delay.h>
-#include <avr/eeprom.h>
-#include <avr/sleep.h>
-#include <avr/wdt.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include "config.h"
 #include "buttons.h"
+#include "usart.h"
+#include "parser.h"
 
 //LCD
 #include "compilers_4.h"
@@ -65,7 +52,10 @@ unsigned int
   I_set = 1000;
   
 char i = 0;
-
+char one_char_buffer = 0;
+char dialog_id = 0; 
+uint16_t int_buffer = 0; 
+bool value_parsed_success = false;
 //EEPROM
 unsigned long eeLastCapacity EEMEM = 0;
 unsigned long eeI EEMEM = 1000;
@@ -102,6 +92,30 @@ uint32_t seconds() {
 }
 
 
+void PARS_Handler(uint8_t argc, char *argv[])
+{
+   int_buffer = PARS_StrToUint(argv[0]);
+   if(dialog_id == VOLTAGE_DIALOG){
+	   
+	   if (int_buffer <= VOLTAGE_MAX && int_buffer >= VOLTAGE_MIN && int_buffer%VOLTAGE_STEP == 0)
+	   {
+		   USART_SendStr("OK\r\n");
+		   value_parsed_success = true;
+	   }else{
+		   USART_SendStr("Invalid value\r\n");
+	   }
+   }
+   if(dialog_id == AMPERAGE_DIALOG){
+	   if (int_buffer <= AMPERAGE_MAX && int_buffer >= AMPERAGE_MIN && int_buffer%AMPERAGE_STEP == 0)
+	   {
+		   USART_SendStr("OK\r\n");
+		   value_parsed_success = true;
+	   }else{
+		   USART_SendStr("Invalid value\r\n");
+	   }
+   }
+}
+
 void t2_init(){
    TIMSK &= ~(1 << OCIE2)|(1 << TOIE2);
    ASSR |= (1 << AS2);
@@ -109,33 +123,6 @@ void t2_init(){
    TCCR2 |= (1 << CS22)|(1 << CS20);
 }
 
-void USARTInit(uint16_t ubrr_value)
-{
-   UBRRL = ubrr_value;
-   UBRRH = (ubrr_value>>8);
-   UCSRC=(1<<URSEL)|(3<<UCSZ0);
-   UCSRB=(1<<RXEN)|(1<<TXEN);
-}
-
-char USARTReadChar()
-{
-   while(!(UCSRA & (1<<RXC))){}
-   return UDR;
-}
-
-void USARTWriteChar(char data)
-{
-   while(!(UCSRA & (1<<UDRE))){}
-   UDR = data;
-}
-void USARTWrite(char *str)
-{
-  uint8_t data;
-  while (*str){
-    data =  *str++;
-    USARTWriteChar(data);
-  }
-}
 
 unsigned int read_adc(unsigned char adc_input)
 {
@@ -153,23 +140,23 @@ unsigned int read_adc(unsigned char adc_input)
 void printUL(char i)
 {
     LCD_WriteData(0x30+i);
-    USARTWriteChar(0x30+i);
+    USART_PutChar(0x30+i);
 }
 void printUARTLCD(char i, bool uart)
 {
 	LCD_WriteData(0x30+i);
 	if(uart){
-		USARTWriteChar(0x30+i);
+		USART_PutChar(0x30+i);
 	}
 }
 void printITime(char a, char b)
 {
     LCD_WriteData(0x30+a);
 	LCD_WriteData(0x30+b);
-    USARTWriteChar(0x30+a);
-    USARTWriteChar(0x30+b);
+    USART_PutChar(0x30+a);
+    USART_PutChar(0x30+b);
 }
-
+/*
 void printWhVoltage(unsigned long val, bool wh)
 {
    if(wh){
@@ -177,9 +164,17 @@ void printWhVoltage(unsigned long val, bool wh)
    }
    printUL((val%10000)/1000);
    LCD_WriteData('.');
-   USARTWriteChar('.');
+   USART_PutChar('.');
    printUL((val%1000)/100);
    printUL((val%100)/10);
+}*/
+void printVoltage(unsigned long val)
+{
+	printUL((val%10000)/1000);
+	LCD_WriteData('.');
+	USART_PutChar('.');
+	printUL((val%1000)/100);
+	printUL((val%100)/10);
 }
 /* Конец долбоебизма */
 
@@ -197,7 +192,7 @@ void checkBattery()
 
 void Reset_Button(){
 	while(BUT_GetKey() != 1){
-		if((UCSRA & (1<<RXC))) break;
+		if(USART_GetChar()) break;
 		BUT_Debrief();
 	}
 }
@@ -209,13 +204,13 @@ void checkTempPotection(){
 		 LCD_SendStr("High temperature");
 		 LCD_Goto(1,1);
 		 LCD_SendStr("Enter - reboot");
-		 USARTWrite("Critical temperarure!!! Test Stopped\r\n");
+		 USART_SendStr("Critical temperarure!!! Test Stopped\r\n");
 	     cli();
 	     OCR1A = 0;
          PORTB &= ~(1 << PB5);
          TCCR1B &= ~(1 << CS11);	
          Reset_Button();
-         USARTWrite("Rebooting\r\n");
+         USART_SendStr("Rebooting\r\n");
          soft_reset();
     }
 }
@@ -224,7 +219,7 @@ void printCapacity(unsigned long Capacity, bool mode, bool uart){
 	if(mode){
 		LCD_Goto(4,1);
 		if(uart){
-			USARTWrite("Capacity: ");
+			USART_SendStr("Capacity: ");
 		}
 	}
 	
@@ -240,7 +235,7 @@ void printCapacity(unsigned long Capacity, bool mode, bool uart){
 	
 	if(mode){
 		if(uart){
-			USARTWrite(" mAh\r\n");
+			USART_SendStr(" mAh\r\n");
 		}
 		LCD_SendStr("mAh");
 	}
@@ -252,7 +247,7 @@ void Charge_battery(bool end)
      
      PORTC |= (1 << PC2);
 	 LCD_Goto(4,0);
-	 USARTWrite("Charging\r\n");
+	 USART_SendStr("Charging\r\n");
 	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(CHARGE_TRIGGER_VALUE) && !(PINC & (1 << PC3))){
 	  LCD_Goto(4,0);
 	  LCD_SendStr("Charging");
@@ -266,21 +261,65 @@ void Charge_battery(bool end)
 	 if(end){
          LCD_Goto(0,0);
 	     LCD_SendStr("Full charged! :)");
-	     USARTWrite("Full charged! :)\r\n");
+	     USART_SendStr("Full charged! :)\r\n");
 		 printCapacity(Capacity/3600, true, false);
          Reset_Button();
-		 USARTWrite("Rebooting\r\n");
+		 USART_SendStr("Rebooting\r\n");
          soft_reset();
 	 }
 }
 
-void printVADialig(unsigned long *eeprom, unsigned int step, char *start_text, unsigned int *var, unsigned int position, unsigned int min, unsigned int max){
+void checkEndVoltage(){
+	if (END_Voltage > Voltage) { //выключение нагрузки при достижении минимального напряжения
+		USART_SendStr("Low voltage: ");
+		printVoltage(Voltage);
+		USART_SendStr("V\r\n");
+		_delay_ms(2000);
+		cli();
+		OCR1A = 0;
+		PORTB &= ~(1 << PB5);
+		TIMSK &= ~(1 << OCIE2)|(1 << TOIE2);
+
+		LCD_Clear();
+		LCD_Goto(1,0);
+		LCD_SendStr("Test completed");
+		USART_SendStr("Test completed\r\n");
+		
+		//Вывод емкости
+		printCapacity(Capacity/3600, true, true);
+
+		eeprom_write_dword(&eeLastCapacity, Capacity/3600);
+
+		_delay_ms(1000);
+
+		LCD_Goto(0,0);
+		LCD_SendStr("    ");
+		LCD_Goto(12,0);
+		LCD_SendStr("    ");
+		Charge_battery(true);
+	}
+}
+
+void printVADialig(unsigned long *eeprom, unsigned int step, char *start_text, unsigned int *var, unsigned int position, unsigned int min, unsigned int max, char *uart_text, char *start_value_text, char id){
    LCD_Goto(position, 0);
    LCD_SendStr(start_text);
    *var = eeprom_read_dword(eeprom);
-   USARTWrite("Press any key to skip selection\r\n");
+   dialog_id = id;
+   USART_SendStr(start_text);
+   USART_SendStr("\r\n");
+   USART_SendStr(start_value_text);
+   USART_PutChar(0x30+(*var/1000));
+   USART_PutChar(',');
+   USART_PutChar(0x30+((*var%1000)/100));
+   USART_SendStr(uart_text);
    while(1){
 	 i = BUT_GetKey();
+	 
+	 if (USART_GetRxCount()){
+		 one_char_buffer = USART_GetChar();
+		 PARS_Parser(one_char_buffer);
+	 }
+	 
 	 if(i == 3 && *var < max){
        *var += step;
 	 }
@@ -288,8 +327,12 @@ void printVADialig(unsigned long *eeprom, unsigned int step, char *start_text, u
      if(i == 4 && *var > min){
        *var -= step;
 	 }
-
-	 if(i == 1 || (UCSRA & (1<<RXC))){
+     
+	 if(i == 1 || value_parsed_success){
+	   if(value_parsed_success){
+		   *var = int_buffer;
+		   value_parsed_success = false;
+	   }
        eeprom_write_dword(eeprom, *var);
 	   LCD_Clear();
 	   break;
@@ -315,13 +358,14 @@ ISR(TIMER2_OVF_vect)
 int main()
 {
    BUT_Init();
-   USARTInit(51);
+   USART_Init(USART_DOUBLED, 9600);
+   PARS_Init();
    LCD_Init();
    t2_init();
    //ADC Init
    ADCSRA = (1<<ADEN) | (0<<ADSC) | (0<<ADFR) | (0<<ADIF) | (0<<ADIE) | (1<<ADPS2) | (0<<ADPS1) | (1<<ADPS0);
 
-   USARTWrite("Initializing...\r\n");
+   USART_SendStr("Initializing...\r\n");
    
    //Конфиг ножек
    DDRB |= (1 << PB1) | (1 << PB5);
@@ -332,14 +376,14 @@ int main()
    LCD_SetUserChar(rightArrow, 1);
 
 
-   USARTWrite("Last capacity:");
+   USART_SendStr("Last capacity:");
    LastCapacity = eeprom_read_dword(&eeLastCapacity);
    LCD_Goto(1,0);
    LCD_SendStr("Last capacity:");
    LCD_Goto(4, 1);
    printCapacity(LastCapacity, false, true);
    LCD_SendStr("mAh");
-   USARTWrite(" mAh\r\n");
+   USART_SendStr(" mAh\r\n");
    PORTC |= (1 << PC4);
    _delay_ms(200);
    PORTC &=~ (1 << PC4);
@@ -355,15 +399,16 @@ int main()
      LCD_SendStr("Charge");
 	 LCD_Goto(0,1);
 	 LCD_SendStr("the battery?");
-	 USARTWrite("Press any key to skip selection\r\n");
+	 USART_SendStr("Charge the battery? (Y/N)\r\n");
 	 while(1){
 	     i = BUT_GetKey();
-		 if(i == 3){
+		 one_char_buffer = USART_GetChar();
+		 if(i == 3 || one_char_buffer == 'Y' || one_char_buffer == 'y'){
 	       charge_before = true;
 		   break;
 		 }
 
-	     if(i == 4 || i == 1 || (UCSRA & (1<<RXC))){
+	     if(i == 4 || i == 1 || one_char_buffer == 'N' || one_char_buffer == 'n'){
 		   charge_before = false;
 		   break;
 		 }
@@ -373,8 +418,8 @@ int main()
    }
 
   //Установка параметров
-  printVADialig(&eeI, 100, "Current:", &I_set, 4, 100, 2000);
-  printVADialig(&eeEND_Voltage, 100, "End voltage:", &END_Voltage, 2, 2500, 3500);
+  printVADialig(&eeI, AMPERAGE_STEP, "Current:", &I_set, 4, AMPERAGE_MIN, AMPERAGE_MAX, "\r\nSend value 100-2000 with step 100 (or send ok):\r\n", "Default value:", AMPERAGE_DIALOG);
+  printVADialig(&eeEND_Voltage, VOLTAGE_STEP, "End voltage:", &END_Voltage, 2, VOLTAGE_MIN, VOLTAGE_MAX, "\r\nSend value 2500-3500 with step 100 (or send ok):\r\n", "Default value:", VOLTAGE_DIALOG);
 
   //Зарядка перед тестом
   if(charge_before){
@@ -382,7 +427,7 @@ int main()
      Charge_battery(false);
   }
 
-   USARTWrite("Press any key to start the test...\r\n");
+   USART_SendStr("Press any key to start the test...\r\n");
 
    LCD_Goto(0,0);
    LCD_SendStr("Press start to");
@@ -393,10 +438,10 @@ int main()
    Reset_Button();
 
 
-   USARTWrite("Starting...\r\n");
+   USART_SendStr("Starting...\r\n");
    LCD_Clear();
    
-   USARTWrite("Seconds | Voltage | Amperage | Time | mAh | Wh\r\n");
+   USART_SendStr("Seconds | Voltage | Amperage | Time | mAh\r\n");
   
    //ШИМ электронной нагрузки
    TCCR1A |= (1 << COM1A1);
@@ -415,8 +460,9 @@ int main()
    
    while(1)
    {   
+	   //Темапературная  защита
 	   checkTempPotection();
-
+	   
        if(interrupt_data) {
 		   Voltage = (read_adc(VOLTAGE_MUX_CHANNEL)*455000/1023000)*10;
 		   I = read_adc(CURRENT_MUX_CHANNEL)*10;
@@ -427,37 +473,37 @@ int main()
 		   //Вывод секунд
 		   char buffer[6];
 		   ltoa((long)seconds(), buffer, 10);
-		   USARTWrite(buffer);
-		   USARTWriteChar(' ');
+		   USART_SendStr(buffer);
+		   USART_PutChar(' ');
            
 		   
 		   //Вывод напряжения 
 		   LCD_Goto(0,0);
-           printWhVoltage(Voltage, false);
+           printVoltage(Voltage);
 		   LCD_SendStr("V");
 
-	       USARTWriteChar(' ');
+	       USART_PutChar(' ');
 
 	        //Вывод Тока 
 	       LCD_Goto(6,0);
 		   printUL(I/1000);
 		   LCD_WriteData('.');
-		   USARTWriteChar('.');
+		   USART_PutChar('.');
            printUL(I%1000/100);
-		   USARTWriteChar(0x30+(I%1000)%100/10);
+		   USART_PutChar(0x30+(I%1000)%100/10);
 		   LCD_SendStr("A");
 
-	       USARTWriteChar(' ');
+	       USART_PutChar(' ');
 
 	       //Вывод времени
 		   LCD_Goto(11,0);
 	       minutes = seconds()/60;
 		   printITime((minutes/60)/10, (minutes/60)%10);
-		   USARTWriteChar(':');
+		   USART_PutChar(':');
 	       LCD_WriteData(':');
            printITime((minutes%60)/10, (minutes%60%10));
            
-	       USARTWriteChar(' ');
+	       USART_PutChar(' ');
 
 	       //Вывод емкости
 		   LCD_Goto(0,1);
@@ -473,34 +519,11 @@ int main()
 		   LCD_SendStr("Wh");
 		   */
 		   
-		   USARTWrite("\r\n");
+		   USART_SendStr("\r\n");
 		   interrupt_data = false;
       }
-      
-	  if (END_Voltage > Voltage) { //выключение нагрузки при достижении минимального напряжения
-	     cli();
-	     OCR1A = 0;
-         PORTB &= ~(1 << PB5);
-         TIMSK &= ~(1 << OCIE2)|(1 << TOIE2);
-
-		 LCD_Clear();
-		 LCD_Goto(1,0);
-		 LCD_SendStr("Test completed");
-         USARTWrite("Test completed\r\n");
-		 
-         //Вывод емкости
-	     printCapacity(Capacity/3600, true, true);
-
-         eeprom_write_dword(&eeLastCapacity, Capacity/3600);
-
-         _delay_ms(1000);
-
-         LCD_Goto(0,0);
-	     LCD_SendStr("    ");
-         LCD_Goto(12,0);
-	     LCD_SendStr("    ");
-         Charge_battery(true);	
-	  }
+	  //Защита от переразряда и конец теста
+	  checkEndVoltage();
    }
 }
 
