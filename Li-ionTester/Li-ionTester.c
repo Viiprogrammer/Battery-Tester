@@ -52,10 +52,13 @@ unsigned int
   I_set = 1000;
   
 char i = 0;
+char button_event = 0;
 char one_char_buffer = 0;
 char dialog_id = 0; 
 uint16_t int_buffer = 0; 
+uint8_t V_ = 0;
 bool value_parsed_success = false;
+bool pause_status = false;
 //EEPROM
 unsigned long eeLastCapacity EEMEM = 0;
 unsigned long eeI EEMEM = 1000;
@@ -126,12 +129,17 @@ void t2_init(){
 
 unsigned int read_adc(unsigned char adc_input)
 {
+  uint32_t adc_ = 0;
   ADMUX= adc_input | ADC_VREF_TYPE;
   _delay_us(10);
-  ADCSRA|=(1<<ADSC);
-  while ((ADCSRA & (1<<ADIF))==0);
-  ADCSRA|=(1<<ADIF);
-  return ADCW;
+  for (char i = 0; i < ADC_READ_NUM; i++)
+  {
+	  ADCSRA|=(1<<ADSC);
+	  while ((ADCSRA & (1<<ADIF))==0);
+	  ADCSRA|=(1<<ADIF);
+	  adc_ += ADCW;
+  }	  
+  return adc_/ADC_READ_NUM;
 }
 
 /*
@@ -170,30 +178,50 @@ void printWhVoltage(unsigned long val, bool wh)
 }*/
 void printVoltage(unsigned long val)
 {
+	V_ = (val%100000)/10000;
+	if(V_){printUL(V_);}
 	printUL((val%10000)/1000);
 	LCD_WriteData('.');
 	USART_PutChar('.');
 	printUL((val%1000)/100);
-	printUL((val%100)/10);
+	if(!V_){
+	 printUL((val%100)/10);
+	}
 }
 /* Конец долбоебизма */
 
-void checkBattery()
+void checkBattery(bool clear, bool test)
 {
    if(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){
+	 LCD_Clear();
      LCD_Goto(0,0);
      LCD_SendStr("Please connect");
 	 LCD_Goto(0,1);
 	 LCD_SendStr("the battery ");
+	 OCR1A = 0;
+	 if(test){
+		 //Подключение АКБ
+		 PORTB &=~ (1 << PB5);
+		 //Включение таймера времени
+		 TIMSK &= ~(1 << TOIE2);
+	 }
 	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){}
-     LCD_Clear();
+     if(test){
+		 //Подключение АКБ
+		 PORTB |= (1 << PB5);
+		 //Включение таймера времени
+		 TIMSK |= (1 << TOIE2);
+		 //PWM Calc
+		 OCR1A = 40*(I_set/100)+4*(I_set/100);
+	 }
+	 if(clear) LCD_Clear();
    }
 }
 
 void Reset_Button(){
-	while(BUT_GetKey() != 1){
+	while(BUT_GetBut() != ENTER_BUTTON_ID && BUT_GetBut() == BUT_PRESSED_CODE){
 		if(USART_GetChar()) break;
-		BUT_Debrief();
+		BUT_Poll();
 	}
 }
 
@@ -254,7 +282,7 @@ void Charge_battery(bool end)
 	  if(end){
 	   printCapacity(Capacity/3600, true, false);
 	  }
-	  checkBattery();
+	  checkBattery(true, false);
 	  checkTempPotection();
 	 }
      PORTC &= ~(1 << PC2);
@@ -272,10 +300,11 @@ void Charge_battery(bool end)
 void checkEndVoltage(){
 	if (END_Voltage > Voltage) { //выключение нагрузки при достижении минимального напряжения
 		USART_SendStr("Low voltage: ");
-		printVoltage(Voltage);
+		USART_PutChar((Voltage%10000)/1000);
+		USART_PutChar('.');
+		USART_PutChar((Voltage%1000)/100);
+		USART_PutChar((Voltage%100)/10);
 		USART_SendStr("V\r\n");
-		_delay_ms(2000);
-		cli();
 		OCR1A = 0;
 		PORTB &= ~(1 << PB5);
 		TIMSK &= ~(1 << OCIE2)|(1 << TOIE2);
@@ -313,22 +342,23 @@ void printVADialig(unsigned long *eeprom, unsigned int step, char *start_text, u
    USART_PutChar(0x30+((*var%1000)/100));
    USART_SendStr(uart_text);
    while(1){
-	 i = BUT_GetKey();
+	 i = BUT_GetBut();
+	 button_event = BUT_GetBut();
 	 
 	 if (USART_GetRxCount()){
 		 one_char_buffer = USART_GetChar();
 		 PARS_Parser(one_char_buffer);
 	 }
 	 
-	 if(i == 3 && *var < max){
+	 if(i == PLUS_UP_ID && button_event == BUT_PRESSED_CODE && *var < max){
        *var += step;
 	 }
 
-     if(i == 4 && *var > min){
+     if(i == MINUS_DOWN_ID && button_event == BUT_PRESSED_CODE && *var > min){
        *var -= step;
 	 }
      
-	 if(i == 1 || value_parsed_success){
+	 if((i == ENTER_BUTTON_ID && button_event == BUT_PRESSED_CODE) || value_parsed_success){
 	   if(value_parsed_success){
 		   *var = int_buffer;
 		   value_parsed_success = false;
@@ -344,7 +374,7 @@ void printVADialig(unsigned long *eeprom, unsigned int step, char *start_text, u
 	 LCD_WriteData(',');
 	 LCD_WriteData(0x30+((*var%1000)/100)); 
 	 LCD_WriteData(0);
-	 BUT_Debrief();
+	 BUT_Poll();
    } 
    
 }
@@ -389,30 +419,31 @@ int main()
    PORTC &=~ (1 << PC4);
    _delay_ms(2500);
 
-   LCD_Clear();
-
-   checkBattery();
+   checkBattery(false, false);
    
    //Диалог зарядки 
    if(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(CHARGE_DIALOG_VALUE)){
+	 LCD_Clear();
      LCD_Goto(0,0);
      LCD_SendStr("Charge");
 	 LCD_Goto(0,1);
 	 LCD_SendStr("the battery?");
 	 USART_SendStr("Charge the battery? (Y/N)\r\n");
 	 while(1){
-	     i = BUT_GetKey();
+	     i = BUT_GetBut();
+	     button_event = BUT_GetBut();
 		 one_char_buffer = USART_GetChar();
-		 if(i == 3 || one_char_buffer == 'Y' || one_char_buffer == 'y'){
+		 
+		 if((i == PLUS_UP_ID  && button_event == BUT_PRESSED_CODE) || one_char_buffer == 'Y' || one_char_buffer == 'y'){
 	       charge_before = true;
 		   break;
 		 }
 
-	     if(i == 4 || i == 1 || one_char_buffer == 'N' || one_char_buffer == 'n'){
+	     if(((i == MINUS_DOWN_ID  && button_event == BUT_PRESSED_CODE) || (i == ENTER_BUTTON_ID  && button_event == BUT_PRESSED_CODE)) || one_char_buffer == 'N' || one_char_buffer == 'n'){
 		   charge_before = false;
 		   break;
 		 }
-         BUT_Debrief();
+         BUT_Poll();
      }
      LCD_Clear();
    }
@@ -460,11 +491,12 @@ int main()
    
    while(1)
    {   
+	   checkBattery(true, true);
 	   //Темапературная  защита
 	   checkTempPotection();
 	   
        if(interrupt_data) {
-		   Voltage = (read_adc(VOLTAGE_MUX_CHANNEL)*455000/1023000)*10;
+		   Voltage = ((read_adc(VOLTAGE_MUX_CHANNEL)*12)/4)*10;
 		   I = read_adc(CURRENT_MUX_CHANNEL)*10;
 
 		   //Измерение емкости 
@@ -522,6 +554,40 @@ int main()
 		   USART_SendStr("\r\n");
 		   interrupt_data = false;
       }
+	  BUT_Poll();
+      i = BUT_GetBut();
+      button_event = BUT_GetBut();
+      if(i == ENTER_BUTTON_ID && button_event == BUT_PRESSED_CODE){
+	   OCR1A = 0;
+       //Отключение АКБ
+	   PORTB &=~ (1 << PB5);
+	   //Выключение таймера времени
+	   TIMSK &= ~(1 << TOIE2);
+	   USART_SendStr("Test suspended\r\n");
+
+	   LCD_Goto(9, 1);
+	   LCD_SendStr("PAUSED");
+       i = 0;
+	   button_event = 0;
+	   while(i != ENTER_BUTTON_ID || button_event != BUT_PRESSED_CODE){
+          BUT_Poll();
+          i = BUT_GetBut();
+          button_event = BUT_GetBut();
+	   }
+	   USART_SendStr("Initializing...\r\n");
+	   //PWM Calc
+	   OCR1A = 40*(I_set/100)+4*(I_set/100);
+	   
+	   //Подключение АКБ
+	   PORTB |= (1 << PB5);
+	   
+	   //Включение таймера времени
+	   TIMSK |= (1 << TOIE2);
+	   LCD_Goto(9, 1);
+	   LCD_SendStr("      ");
+	   USART_SendStr("Test continued...\r\n");
+      } 
+
 	  //Защита от переразряда и конец теста
 	  checkEndVoltage();
    }

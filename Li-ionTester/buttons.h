@@ -1,79 +1,153 @@
 //***************************************************************************
 //
-//  Author(s)...: Pashgan    http://ChipEnable.Ru
+//  Author(s)...: Павел Бобков  http://ChipEnable.Ru   
 //
-//  Target(s)...: любой микроконтроллер
+//  Target(s)...: avr
 //
-//  Compiler....: IAR EWA 5.11A
+//  Compiler....: IAR
 //
-//  Description.: драйвер 4-ех кнопочного джойстика
+//  Description.: драйвер кнопок, концевых датчиков и т.д.
 //
-//  Data........: 25.10.09
+//  Data........: 12.12.13
 //
 //***************************************************************************
-#ifndef	BUTTONS_h
-#define	BUTTONS_h
+#ifndef BUT_H
+#define BUT_H
 
-#include <avr/io.h>
+#ifdef  __ICCAVR__ 
+   #include <ioavr.h>
+   #include <intrinsics.h>
+#elif  __GNUC__
+   #include <avr/io.h>
+   #include <avr/interrupt.h>
+#elif __CODEVISIONAVR__
+   #include <io.h>
+#endif
 
-//порт, к которому подключены кнопки
-#define PORT_BUTTON 	PORTD
-#define PIN_BUTTON 	PIND
-#define DDRX_BUTTON 	DDRD
+#include <stdint.h>
 
-//номера выводов, к которым подключены кнопки
-#define DOWN 		4
-#define CANCEL 		0
-#define UP		3
-#define ENTER 		2
+/****************** не менять ****************************/
 
-//коды, которые будут записываться в буфер
-#define KEY_NULL      0
-#define KEY_ENTER     1
-#define KEY_CANCEL    2
-#define KEY_UP        3
-#define KEY_DOWN      4
+#define BUT_EV_PRESSED       (1<<0)
+#define BUT_EV_HELD          (1<<1) 
+#define BUT_EV_RELEASED      (1<<2)
+#define BUT_EV_RELEASED_LONG (1<<3)
+#define BUT_EV_DOUBLE_CLICK  (1<<4)
+#define BUT_EV_ALL           (BUT_EV_PRESSED|BUT_EV_HELD|BUT_EV_RELEASED|BUT_EV_RELEASED_LONG|BUT_EV_DOUBLE_CLICK)
 
-//сколько циклов опроса кнопка должна удерживаться
-#define THRESHOLD 20
-/**************************************************************************
-*   Function name : BUT_Init
-*   Returns :       нет
-*   Parameters :    нет
-*   Purpose :       инициализация портов ввода/вывода
-*                   вызывается обычно в начале main`a
-****************************************************************************/
+
+/***************** настройки драйвера *********************/
+
+/*количество кнопок*/
+
+#define BUT_AMOUNT           3
+
+/*сколько циклов опроса нужно удерживать 
+кнопку, чтобы она считалась нажатой. 
+должно быть меньше BUT_COUNT_HELD */
+
+#define BUT_COUNT_THR        10
+
+/*максимальное количество циклов между первым 
+и вторым нажатием кнопки для двойного щелчка*/
+
+#define BUT_COUNT_THR_2      200
+
+/*сколько циклов опроса нужно удерживать кнопку,
+чтобы она считалась длительно нажатой
+должно быть больше BUT_COUNT_THR */
+
+#define BUT_COUNT_HELD       500
+
+
+
+/*размер буфера событий.
+Его значение должно быть 
+кратно степени двойки (2, 4, 8, 16...).*/
+
+#define BUT_SIZE_BUF   8
+
+/*циклический опрос или нет. 
+0 - опрос всех кнопок за один вызов BUT_poll()
+1 - опрос одной кнопки за один вызов BUT_poll()*/
+
+#define BUT_POLL_ROTATION    0
+
+
+
+/* события, которые фиксируются в буфере. 
+0 - это событие не фиксируется
+1 - событие фиксируется, если разрещено индивидуальной настройкой*/
+
+#define BUT_PRESSED_EN          1
+#define BUT_HELD_EN             0
+#define BUT_RELEASED_EN         0
+#define BUT_RELEASE_LONG_EN     0
+#define BUT_DOUBLE_CLICK_EN     1
+
+/* коды событий. могут принимать 
+любые значение от 1 до 255 */
+
+#define BUT_PRESSED_CODE        1
+#define BUT_HELD_CODE           2 
+#define BUT_RELEASED_CODE       3
+#define BUT_RELEASED_LONG_CODE  4
+#define BUT_DOUBLE_CLICK_CODE   5
+
+
+/* настройки входов
+BUT_1_ID     код кнопки. соответствует ее номеру. задается по порядку (1, 2, 3 .. 32)
+BUT_1_DDRX   порт микроконтроллера, задающий направление работы пина
+BUT_1_PORTX  порт микроконтроллера, где включается подтягивающий резистор
+BUT_1_PINX   порт микроконтроллера, отображающий состояние пина
+BUT_1_PIN    номер пина микроконтроллера
+BUT_1_LEV    активный уровень пина
+BUT_1_PULL   0 - не включать подтягивающий резистор, 1 - включать
+BUT_1_EVEN   список событий, которые фиксируется в буфере (BUT_EV_PRESSED|BUT_EV_RELEASED|...)*/
+
+#define BUT_1_ID     1
+#define BUT_1_DDRX   DDRD
+#define BUT_1_PORTX  PORTD
+#define BUT_1_PINX   PIND
+#define BUT_1_PIN    2
+#define BUT_1_LEV    0
+#define BUT_1_PULL   0
+#define BUT_1_EVENT  (BUT_EV_PRESSED|BUT_EV_DOUBLE_CLICK)
+
+#define BUT_2_ID     2
+#define BUT_2_DDRX   DDRD
+#define BUT_2_PORTX  PORTD
+#define BUT_2_PINX   PIND
+#define BUT_2_PIN    3
+#define BUT_2_LEV    0
+#define BUT_2_PULL   0
+#define BUT_2_EVENT  (BUT_EV_PRESSED)
+
+#define BUT_3_ID     3
+#define BUT_3_DDRX   DDRD
+#define BUT_3_PORTX  PORTD
+#define BUT_3_PINX   PIND
+#define BUT_3_PIN    4
+#define BUT_3_LEV    0
+#define BUT_3_PULL   0
+#define BUT_3_EVENT  (BUT_EV_PRESSED)
+
+/**************** пользовательские функции *****************/
+
+/*инициализация. 
+вызывается в начале программы*/
+
 void BUT_Init(void);
 
-/**************************************************************************
-*   Function name : BUT_Debrief
-*   Returns :       нет
-*   Parameters :    нет
-*   Purpose :       опрашивает кнопки. вызывается обычно из прерывания
-*                   если кнопка нажата в течении 20 прерываний,
-*                   ее номер записывается в буфер
-****************************************************************************/
-void BUT_Debrief(void);
+/*опрос кнопок/входов. 
+вызывается периодически*/
 
-/**************************************************************************
-*   Function name : BUT_GetKey
-*   Returns :       номер нажатой кнопки
-*   Parameters :    нет
-*   Purpose :       возвращает содержимое кнопочного буфера
-*                   при этом буфер очищается
-*                   вызывается обычно в main`e в цикле while
-*
-****************************************************************************/
-unsigned char BUT_GetKey(void);
+void BUT_Poll(void);
 
+/*взять событие из буфера.нужно вызывать два раза.
+первый раз возвращается ID кнопки. второй раз возвращается код события*/
 
-/**************************************************************************
-*   Function name : BUT_Init
-*   Returns :       нет
-*   Parameters :    номер кнопки
-*   Purpose :       записывает в кнопочный буфер значение
-*                   требуется иногда для имитации нажатия кнопок
-****************************************************************************/
-void BUT_SetKey(unsigned char key);
+uint8_t BUT_GetBut(void);
 
-#endif //BUTTONS_H
+#endif //BUT_H
+
