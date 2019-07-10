@@ -78,6 +78,12 @@
   </PropertyGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
   <ItemGroup>
+    <Compile Include="74hc595.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="74hc595.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="compilers_4.h">
       <SubType>compile</SubType>
     </Compile>

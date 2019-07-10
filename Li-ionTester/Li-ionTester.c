@@ -21,9 +21,8 @@ do                          \
 #include "buttons.h"
 #include "usart.h"
 #include "parser.h"
-
+#include "74hc595.h"
 //LCD
-#include "compilers_4.h"
 #include "lcd_lib_2.h"
 
 //Секунды
@@ -201,14 +200,14 @@ void checkBattery(bool clear, bool test)
 	 OCR1A = 0;
 	 if(test){
 		 //Подключение АКБ
-		 PORTB &=~ (1 << PB5);
+		 BATTERY_OFF;
 		 //Включение таймера времени
 		 TIMSK &= ~(1 << TOIE2);
 	 }
 	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){}
      if(test){
 		 //Подключение АКБ
-		 PORTB |= (1 << PB5);
+		 BATTERY_ON;
 		 //Включение таймера времени
 		 TIMSK |= (1 << TOIE2);
 		 //PWM Calc
@@ -219,10 +218,13 @@ void checkBattery(bool clear, bool test)
 }
 
 void Reset_Button(){
-	while(BUT_GetBut() != ENTER_BUTTON_ID && BUT_GetBut() == BUT_PRESSED_CODE){
-		if(USART_GetChar()) break;
-		BUT_Poll();
-	}
+       i = 0;
+       button_event = 0;
+       while(i != ENTER_BUTTON_ID || button_event != BUT_PRESSED_CODE){
+	       BUT_Poll();
+	       i = BUT_GetBut();
+	       button_event = BUT_GetBut();
+       }
 }
 
 void checkTempPotection(){
@@ -233,10 +235,9 @@ void checkTempPotection(){
 		 LCD_Goto(1,1);
 		 LCD_SendStr("Enter - reboot");
 		 USART_SendStr("Critical temperarure!!! Test Stopped\r\n");
-	     cli();
 	     OCR1A = 0;
-         PORTB &= ~(1 << PB5);
-         TCCR1B &= ~(1 << CS11);	
+		 TIMSK &= ~(1 << TOIE2);
+         BATTERY_OFF;
          Reset_Button();
          USART_SendStr("Rebooting\r\n");
          soft_reset();
@@ -273,7 +274,7 @@ void printCapacity(unsigned long Capacity, bool mode, bool uart){
 void Charge_battery(bool end)
 {
      
-     PORTC |= (1 << PC2);
+     TP4056_ON;
 	 LCD_Goto(4,0);
 	 USART_SendStr("Charging\r\n");
 	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(CHARGE_TRIGGER_VALUE) && !(PINC & (1 << PC3))){
@@ -285,7 +286,7 @@ void Charge_battery(bool end)
 	  checkBattery(true, false);
 	  checkTempPotection();
 	 }
-     PORTC &= ~(1 << PC2);
+     TP4056_OFF;
 	 if(end){
          LCD_Goto(0,0);
 	     LCD_SendStr("Full charged! :)");
@@ -306,7 +307,7 @@ void checkEndVoltage(){
 		USART_PutChar((Voltage%100)/10);
 		USART_SendStr("V\r\n");
 		OCR1A = 0;
-		PORTB &= ~(1 << PB5);
+		BATTERY_OFF;
 		TIMSK &= ~(1 << OCIE2)|(1 << TOIE2);
 
 		LCD_Clear();
@@ -390,6 +391,7 @@ int main()
    BUT_Init();
    USART_Init(USART_DOUBLED, 9600);
    PARS_Init();
+   ShiftRegisterInit();
    LCD_Init();
    t2_init();
    //ADC Init
@@ -398,9 +400,8 @@ int main()
    USART_SendStr("Initializing...\r\n");
    
    //Конфиг ножек
-   DDRB |= (1 << PB1) | (1 << PB5);
+   DDRB |= (1 << PB1);
    DDRC &= ~((1 << PC0) | (1 << PC1) | (1 << PC3) | (1 << PC5));
-   DDRC |=  ((1 << PC2) | (1 << PC4));
 
    LCD_SetUserChar(leftArrow, 0);
    LCD_SetUserChar(rightArrow, 1);
@@ -414,9 +415,6 @@ int main()
    printCapacity(LastCapacity, false, true);
    LCD_SendStr("mAh");
    USART_SendStr(" mAh\r\n");
-   PORTC |= (1 << PC4);
-   _delay_ms(200);
-   PORTC &=~ (1 << PC4);
    _delay_ms(2500);
 
    checkBattery(false, false);
@@ -481,7 +479,7 @@ int main()
    OCR1A = 40*(I_set/100)+4*(I_set/100);
    
    //Подключение АКБ
-   PORTB |= (1 << PB5);
+   BATTERY_ON;
    
    //Включение таймера времени
    TIMSK |= (1 << TOIE2);
@@ -560,7 +558,7 @@ int main()
       if(i == ENTER_BUTTON_ID && button_event == BUT_PRESSED_CODE){
 	   OCR1A = 0;
        //Отключение АКБ
-	   PORTB &=~ (1 << PB5);
+	   BATTERY_OFF;
 	   //Выключение таймера времени
 	   TIMSK &= ~(1 << TOIE2);
 	   USART_SendStr("Test suspended\r\n");
@@ -579,7 +577,7 @@ int main()
 	   OCR1A = 40*(I_set/100)+4*(I_set/100);
 	   
 	   //Подключение АКБ
-	   PORTB |= (1 << PB5);
+	   BATTERY_ON;
 	   
 	   //Включение таймера времени
 	   TIMSK |= (1 << TOIE2);

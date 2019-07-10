@@ -9,7 +9,7 @@ c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/av
 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_copy_data.o)
                               Li-ionTester.o (__do_copy_data)
 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_clear_bss.o)
-                              parser.o (__do_clear_bss)
+                              74hc595.o (__do_clear_bss)
 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(ltoa.o)
                               Li-ionTester.o (ltoa)
 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eerd_dword_atmega8.o)
@@ -36,6 +36,9 @@ Discarded input sections
 
  .data          0x00000000        0x0 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4/crtm8.o
  .bss           0x00000000        0x0 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4/crtm8.o
+ .text          0x00000000        0x0 74hc595.o
+ .data          0x00000000        0x0 74hc595.o
+ .bss           0x00000000        0x0 74hc595.o
  .text          0x00000000        0x0 parser.o
  .data          0x00000000        0x0 parser.o
  .bss           0x00000000        0x0 parser.o
@@ -125,6 +128,7 @@ signature        0x00840000         0x00000400         rw !x
 Linker script and memory map
 
 LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4/crtm8.o
+LOAD 74hc595.o
 LOAD parser.o
 LOAD Li-ionTester.o
 LOAD lcd_lib_2.o
@@ -226,7 +230,7 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x15cc
+.text           0x00000000     0x16f8
  *(.vectors)
  .vectors       0x00000000       0x26 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4/crtm8.o
                 0x00000000                __vector_default
@@ -303,149 +307,164 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
                 0x0000006c                __vector_18
                 0x0000006e                . = ALIGN (0x2)
  *(.text.*)
+ .text.ShiftRegisterInit
+                0x0000006e        0xe 74hc595.o
+                0x0000006e                ShiftRegisterInit
+ .text.ShiftRegisterSend
+                0x0000007c       0x24 74hc595.o
+                0x0000007c                ShiftRegisterSend
+ .text.ShiftDigitalWrite
+                0x000000a0       0x3a 74hc595.o
+                0x000000a0                ShiftDigitalWrite
+ .text.ShiftDigitalWritePort
+                0x000000da        0xc 74hc595.o
+                0x000000da                ShiftDigitalWritePort
+ .text.ShiftDigitalGetPort
+                0x000000e6        0xa 74hc595.o
+                0x000000e6                ShiftDigitalGetPort
  .text.PARS_Init
-                0x0000006e       0x1a parser.o
-                0x0000006e                PARS_Init
+                0x000000f0       0x1a parser.o
+                0x000000f0                PARS_Init
  .text.PARS_Parser
-                0x00000088       0xc4 parser.o
-                0x00000088                PARS_Parser
+                0x0000010a       0xc4 parser.o
+                0x0000010a                PARS_Parser
  .text.PARS_StrToUint
-                0x0000014c       0x46 parser.o
-                0x0000014c                PARS_StrToUint
- .text.seconds  0x00000192       0x1a Li-ionTester.o
-                0x00000192                seconds
+                0x000001ce       0x46 parser.o
+                0x000001ce                PARS_StrToUint
+ .text.seconds  0x00000214       0x1a Li-ionTester.o
+                0x00000214                seconds
  .text.PARS_Handler
-                0x000001ac       0x84 Li-ionTester.o
-                0x000001ac                PARS_Handler
- .text.t2_init  0x00000230       0x16 Li-ionTester.o
-                0x00000230                t2_init
+                0x0000022e       0x84 Li-ionTester.o
+                0x0000022e                PARS_Handler
+ .text.t2_init  0x000002b2       0x16 Li-ionTester.o
+                0x000002b2                t2_init
  .text.read_adc
-                0x00000246       0x3c Li-ionTester.o
-                0x00000246                read_adc
- .text.printUL  0x00000282       0x12 Li-ionTester.o
-                0x00000282                printUL
+                0x000002c8       0x3c Li-ionTester.o
+                0x000002c8                read_adc
+ .text.printUL  0x00000304       0x12 Li-ionTester.o
+                0x00000304                printUL
  .text.printUARTLCD
-                0x00000294       0x2a Li-ionTester.o
-                0x00000294                printUARTLCD
+                0x00000316       0x2a Li-ionTester.o
+                0x00000316                printUARTLCD
  .text.printITime
-                0x000002be       0x22 Li-ionTester.o
-                0x000002be                printITime
+                0x00000340       0x22 Li-ionTester.o
+                0x00000340                printITime
  .text.printVoltage
-                0x000002e0       0xb0 Li-ionTester.o
-                0x000002e0                printVoltage
+                0x00000362       0xb0 Li-ionTester.o
+                0x00000362                printVoltage
  .text.checkBattery
-                0x00000390       0x9c Li-ionTester.o
-                0x00000390                checkBattery
+                0x00000412       0xb4 Li-ionTester.o
+                0x00000412                checkBattery
  .text.Reset_Button
-                0x0000042c       0x18 Li-ionTester.o
-                0x0000042c                Reset_Button
+                0x000004c6       0x2a Li-ionTester.o
+                0x000004c6                Reset_Button
  .text.checkTempPotection
-                0x00000444       0x62 Li-ionTester.o
-                0x00000444                checkTempPotection
+                0x000004f0       0x6c Li-ionTester.o
+                0x000004f0                checkTempPotection
  .text.printCapacity
-                0x000004a6       0xec Li-ionTester.o
-                0x000004a6                printCapacity
+                0x0000055c       0xec Li-ionTester.o
+                0x0000055c                printCapacity
  .text.Charge_battery
-                0x00000592       0xce Li-ionTester.o
-                0x00000592                Charge_battery
+                0x00000648       0xe6 Li-ionTester.o
+                0x00000648                Charge_battery
  .text.checkEndVoltage
-                0x00000660      0x16a Li-ionTester.o
-                0x00000660                checkEndVoltage
+                0x0000072e      0x176 Li-ionTester.o
+                0x0000072e                checkEndVoltage
  .text.printVADialig
-                0x000007ca      0x1ae Li-ionTester.o
-                0x000007ca                printVADialig
+                0x000008a4      0x1ae Li-ionTester.o
+                0x000008a4                printVADialig
  .text.__vector_4
-                0x00000978       0x50 Li-ionTester.o
-                0x00000978                __vector_4
- .text.main     0x000009c8      0x55c Li-ionTester.o
-                0x000009c8                main
+                0x00000a52       0x50 Li-ionTester.o
+                0x00000a52                __vector_4
+ .text.main     0x00000aa2      0x562 Li-ionTester.o
+                0x00000aa2                main
  .text.LCD_CommonFunc
-                0x00000f24       0x76 lcd_lib_2.o
+                0x00001004       0x98 lcd_lib_2.o
  .text.LCD_WriteComInit
-                0x00000f9a       0x44 lcd_lib_2.o
-                0x00000f9a                LCD_WriteComInit
+                0x0000109c       0x64 lcd_lib_2.o
+                0x0000109c                LCD_WriteComInit
  .text.LCD_WriteCom
-                0x00000fde        0xe lcd_lib_2.o
-                0x00000fde                LCD_WriteCom
+                0x00001100       0x22 lcd_lib_2.o
+                0x00001100                LCD_WriteCom
  .text.LCD_WriteData
-                0x00000fec        0xe lcd_lib_2.o
-                0x00000fec                LCD_WriteData
+                0x00001122       0x22 lcd_lib_2.o
+                0x00001122                LCD_WriteData
  .text.LCD_Init
-                0x00000ffa       0x64 lcd_lib_2.o
-                0x00000ffa                LCD_Init
+                0x00001144       0x46 lcd_lib_2.o
+                0x00001144                LCD_Init
  .text.LCD_SendStr
-                0x0000105e       0x26 lcd_lib_2.o
-                0x0000105e                LCD_SendStr
+                0x0000118a       0x26 lcd_lib_2.o
+                0x0000118a                LCD_SendStr
  .text.LCD_SetUserChar
-                0x00001084       0x42 lcd_lib_2.o
-                0x00001084                LCD_SetUserChar
- .text.PutBut   0x000010c6       0x28 buttons.o
+                0x000011b0       0x42 lcd_lib_2.o
+                0x000011b0                LCD_SetUserChar
+ .text.PutBut   0x000011f2       0x28 buttons.o
  .text.BUT_Check
-                0x000010ee      0x108 buttons.o
+                0x0000121a      0x108 buttons.o
  .text.BUT_GetBut
-                0x000011f6       0x2a buttons.o
-                0x000011f6                BUT_GetBut
+                0x00001322       0x2a buttons.o
+                0x00001322                BUT_GetBut
  .text.BUT_Init
-                0x00001220       0x6a buttons.o
-                0x00001220                BUT_Init
+                0x0000134c       0x6a buttons.o
+                0x0000134c                BUT_Init
  .text.BUT_Poll
-                0x0000128a       0x26 buttons.o
-                0x0000128a                BUT_Poll
+                0x000013b6       0x26 buttons.o
+                0x000013b6                BUT_Poll
  .text.USART_Init
-                0x000012b0       0x6e usart.o
-                0x000012b0                USART_Init
+                0x000013dc       0x6e usart.o
+                0x000013dc                USART_Init
  .text.USART_PutChar
-                0x0000131e       0x4c usart.o
-                0x0000131e                USART_PutChar
+                0x0000144a       0x4c usart.o
+                0x0000144a                USART_PutChar
  .text.USART_SendStr
-                0x0000136a       0x26 usart.o
-                0x0000136a                USART_SendStr
+                0x00001496       0x26 usart.o
+                0x00001496                USART_SendStr
  .text.__vector_12
-                0x00001390       0x5a usart.o
-                0x00001390                __vector_12
+                0x000014bc       0x5a usart.o
+                0x000014bc                __vector_12
  .text.USART_GetRxCount
-                0x000013ea        0x6 usart.o
-                0x000013ea                USART_GetRxCount
+                0x00001516        0x6 usart.o
+                0x00001516                USART_GetRxCount
  .text.USART_GetChar
-                0x000013f0       0x3a usart.o
-                0x000013f0                USART_GetChar
+                0x0000151c       0x3a usart.o
+                0x0000151c                USART_GetChar
  .text.__vector_11
-                0x0000142a       0x5a usart.o
-                0x0000142a                __vector_11
- .text.libgcc   0x00001484       0x28 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_udivmodhi4.o)
-                0x00001484                __udivmodhi4
- .text.libgcc   0x000014ac       0x44 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_udivmodsi4.o)
-                0x000014ac                __udivmodsi4
+                0x00001556       0x5a usart.o
+                0x00001556                __vector_11
+ .text.libgcc   0x000015b0       0x28 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_udivmodhi4.o)
+                0x000015b0                __udivmodhi4
+ .text.libgcc   0x000015d8       0x44 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_udivmodsi4.o)
+                0x000015d8                __udivmodsi4
  .text.avr-libc
-                0x000014f0       0x64 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(ltoa.o)
-                0x000014f0                ltoa
+                0x0000161c       0x64 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(ltoa.o)
+                0x0000161c                ltoa
  .text.avr-libc
-                0x00001554        0xa c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eerd_dword_atmega8.o)
-                0x00001554                __eerd_dword_m8
-                0x00001554                __eerd_float_m8
+                0x00001680        0xa c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eerd_dword_atmega8.o)
+                0x00001680                __eerd_dword_m8
+                0x00001680                __eerd_float_m8
  .text.avr-libc
-                0x0000155e        0xa c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_dword_atmega8.o)
-                0x0000155e                __eewr_float_m8
-                0x0000155e                __eewr_dword_m8
+                0x0000168a        0xa c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_dword_atmega8.o)
+                0x0000168a                __eewr_float_m8
+                0x0000168a                __eewr_dword_m8
  .text.avr-libc
-                0x00001568        0x6 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_word_atmega8.o)
-                0x00001568                __eewr_word_m8
+                0x00001694        0x6 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_word_atmega8.o)
+                0x00001694                __eewr_word_m8
  .text.avr-libc
-                0x0000156e       0x20 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(strrev.o)
-                0x0000156e                strrev
+                0x0000169a       0x20 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(strrev.o)
+                0x0000169a                strrev
  .text.avr-libc
-                0x0000158e       0x20 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eerd_block_atmega8.o)
-                0x0000158e                __eerd_block_m8
-                0x00001592                __eerd_blraw_m8
+                0x000016ba       0x20 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eerd_block_atmega8.o)
+                0x000016ba                __eerd_block_m8
+                0x000016be                __eerd_blraw_m8
  .text.avr-libc
-                0x000015ae       0x1a c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_byte_atmega8.o)
-                0x000015ae                __eewr_byte_m8
-                0x000015b0                __eewr_r18_m8
-                0x000015c8                . = ALIGN (0x2)
+                0x000016da       0x1a c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/../../../../avr/lib/avr4\libc.a(eewr_byte_atmega8.o)
+                0x000016da                __eewr_byte_m8
+                0x000016dc                __eewr_r18_m8
+                0x000016f4                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000015c8        0x0 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_exit.o)
-                0x000015c8                _exit
-                0x000015c8                exit
+ .fini9         0x000016f4        0x0 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_exit.o)
+                0x000016f4                _exit
+                0x000016f4                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -464,11 +483,11 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000015c8        0x4 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_exit.o)
+ .fini0         0x000016f4        0x4 c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5.1/avr4\libgcc.a(_exit.o)
  *(.fini0)
-                0x000015cc                _etext = .
+                0x000016f8                _etext = .
 
-.data           0x00800060      0x2a4 load address 0x000015cc
+.data           0x00800060      0x2a4 load address 0x000016f8
                 0x00800060                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800060      0x29f Li-ionTester.o
@@ -486,94 +505,97 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
                 0x00800304                _edata = .
                 0x00800304                PROVIDE (__data_end, .)
 
-.bss            0x00800304       0x79
+.bss            0x00800304       0x7a
                 0x00800304                PROVIDE (__bss_start, .)
  *(.bss)
  *(.bss*)
- .bss.inc       0x00800304        0x1 parser.o
-                0x00800304                inc
- .bss.flag      0x00800305        0x1 parser.o
-                0x00800305                flag
+ .bss.ShiftPORT
+                0x00800304        0x1 74hc595.o
+                0x00800304                ShiftPORT
+ .bss.inc       0x00800305        0x1 parser.o
+                0x00800305                inc
+ .bss.flag      0x00800306        0x1 parser.o
+                0x00800306                flag
  .bss.seconds_timer2
-                0x00800306        0x4 Li-ionTester.o
-                0x00800306                seconds_timer2
+                0x00800307        0x4 Li-ionTester.o
+                0x00800307                seconds_timer2
  .bss.interrupt_data
-                0x0080030a        0x1 Li-ionTester.o
-                0x0080030a                interrupt_data
- .bss.charge_before
                 0x0080030b        0x1 Li-ionTester.o
-                0x0080030b                charge_before
+                0x0080030b                interrupt_data
+ .bss.charge_before
+                0x0080030c        0x1 Li-ionTester.o
+                0x0080030c                charge_before
  .bss.LastCapacity
-                0x0080030c        0x4 Li-ionTester.o
-                0x0080030c                LastCapacity
- .bss.minutes   0x00800310        0x4 Li-ionTester.o
-                0x00800310                minutes
- .bss.Capacity  0x00800314        0x4 Li-ionTester.o
-                0x00800314                Capacity
- .bss.I         0x00800318        0x4 Li-ionTester.o
-                0x00800318                I
- .bss.Voltage   0x0080031c        0x4 Li-ionTester.o
-                0x0080031c                Voltage
- .bss.i         0x00800320        0x1 Li-ionTester.o
-                0x00800320                i
+                0x0080030d        0x4 Li-ionTester.o
+                0x0080030d                LastCapacity
+ .bss.minutes   0x00800311        0x4 Li-ionTester.o
+                0x00800311                minutes
+ .bss.Capacity  0x00800315        0x4 Li-ionTester.o
+                0x00800315                Capacity
+ .bss.I         0x00800319        0x4 Li-ionTester.o
+                0x00800319                I
+ .bss.Voltage   0x0080031d        0x4 Li-ionTester.o
+                0x0080031d                Voltage
+ .bss.i         0x00800321        0x1 Li-ionTester.o
+                0x00800321                i
  .bss.button_event
-                0x00800321        0x1 Li-ionTester.o
-                0x00800321                button_event
- .bss.one_char_buffer
                 0x00800322        0x1 Li-ionTester.o
-                0x00800322                one_char_buffer
- .bss.dialog_id
+                0x00800322                button_event
+ .bss.one_char_buffer
                 0x00800323        0x1 Li-ionTester.o
-                0x00800323                dialog_id
+                0x00800323                one_char_buffer
+ .bss.dialog_id
+                0x00800324        0x1 Li-ionTester.o
+                0x00800324                dialog_id
  .bss.int_buffer
-                0x00800324        0x2 Li-ionTester.o
-                0x00800324                int_buffer
- .bss.V_        0x00800326        0x1 Li-ionTester.o
-                0x00800326                V_
+                0x00800325        0x2 Li-ionTester.o
+                0x00800325                int_buffer
+ .bss.V_        0x00800327        0x1 Li-ionTester.o
+                0x00800327                V_
  .bss.value_parsed_success
-                0x00800327        0x1 Li-ionTester.o
-                0x00800327                value_parsed_success
- .bss.stateBut  0x00800328        0x3 buttons.o
+                0x00800328        0x1 Li-ionTester.o
+                0x00800328                value_parsed_success
+ .bss.stateBut  0x00800329        0x3 buttons.o
  .bss.countHold
-                0x0080032b        0x3 buttons.o
+                0x0080032c        0x3 buttons.o
  .bss.countHoldTmp
-                0x0080032e        0x1 buttons.o
- .bss.countDeb  0x0080032f        0x6 buttons.o
+                0x0080032f        0x1 buttons.o
+ .bss.countDeb  0x00800330        0x6 buttons.o
  .bss.countDebTmp
-                0x00800335        0x2 buttons.o
- .bss.count     0x00800337        0x1 buttons.o
- .bss.head      0x00800338        0x1 buttons.o
- .bss.buf       0x00800339        0x8 buttons.o
- .bss.tail      0x00800341        0x1 buttons.o
- .bss.rxCount   0x00800342        0x1 usart.o
+                0x00800336        0x2 buttons.o
+ .bss.count     0x00800338        0x1 buttons.o
+ .bss.head      0x00800339        0x1 buttons.o
+ .bss.buf       0x0080033a        0x8 buttons.o
+ .bss.tail      0x00800342        0x1 buttons.o
+ .bss.rxCount   0x00800343        0x1 usart.o
  .bss.rxBufTail
-                0x00800343        0x1 usart.o
+                0x00800344        0x1 usart.o
  .bss.usartRxBuf
-                0x00800344       0x10 usart.o
+                0x00800345       0x10 usart.o
  .bss.rxBufHead
-                0x00800354        0x1 usart.o
- .bss.txCount   0x00800355        0x1 usart.o
+                0x00800355        0x1 usart.o
+ .bss.txCount   0x00800356        0x1 usart.o
  .bss.txBufHead
-                0x00800356        0x1 usart.o
+                0x00800357        0x1 usart.o
  .bss.usartTxBuf
-                0x00800357       0x10 usart.o
+                0x00800358       0x10 usart.o
  .bss.txBufTail
-                0x00800367        0x1 usart.o
+                0x00800368        0x1 usart.o
  *(COMMON)
- COMMON         0x00800368       0x15 parser.o
-                0x00800368                argv
-                0x0080036c                argc
-                0x0080036d                buf
-                0x0080037d                PROVIDE (__bss_end, .)
-                0x000015cc                __data_load_start = LOADADDR (.data)
-                0x00001870                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x00800369       0x15 parser.o
+                0x00800369                argv
+                0x0080036d                argc
+                0x0080036e                buf
+                0x0080037e                PROVIDE (__bss_end, .)
+                0x000016f8                __data_load_start = LOADADDR (.data)
+                0x0000199c                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x0080037d        0x0
-                0x0080037d                PROVIDE (__noinit_start, .)
+.noinit         0x0080037e        0x0
+                0x0080037e                PROVIDE (__noinit_start, .)
  *(.noinit*)
-                0x0080037d                PROVIDE (__noinit_end, .)
-                0x0080037d                _end = .
-                0x0080037d                PROVIDE (__heap_start, .)
+                0x0080037e                PROVIDE (__noinit_end, .)
+                0x0080037e                _end = .
+                0x0080037e                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0xc
  *(.eeprom*)
@@ -644,86 +666,97 @@ LOAD c:/program files (x86)/atmel/avr tools/avr toolchain/bin/../lib/gcc/avr/4.5
 .debug_sfnames
  *(.debug_sfnames)
 
-.debug_aranges  0x00000000      0x1f0
+.debug_aranges  0x00000000      0x230
  *(.debug_aranges)
  .debug_aranges
-                0x00000000       0x48 parser.o
+                0x00000000       0x40 74hc595.o
  .debug_aranges
-                0x00000048       0xa0 Li-ionTester.o
+                0x00000040       0x48 parser.o
  .debug_aranges
-                0x000000e8       0x58 lcd_lib_2.o
+                0x00000088       0xa0 Li-ionTester.o
  .debug_aranges
-                0x00000140       0x40 buttons.o
+                0x00000128       0x58 lcd_lib_2.o
  .debug_aranges
-                0x00000180       0x70 usart.o
+                0x00000180       0x40 buttons.o
+ .debug_aranges
+                0x000001c0       0x70 usart.o
 
 .debug_pubnames
-                0x00000000      0x4dd
+                0x00000000      0x571
  *(.debug_pubnames)
  .debug_pubnames
-                0x00000000       0xa8 parser.o
+                0x00000000       0x94 74hc595.o
  .debug_pubnames
-                0x000000a8      0x284 Li-ionTester.o
+                0x00000094       0xa8 parser.o
  .debug_pubnames
-                0x0000032c       0x8d lcd_lib_2.o
+                0x0000013c      0x284 Li-ionTester.o
  .debug_pubnames
-                0x000003b9       0x3b buttons.o
+                0x000003c0       0x8d lcd_lib_2.o
  .debug_pubnames
-                0x000003f4       0xe9 usart.o
+                0x0000044d       0x3b buttons.o
+ .debug_pubnames
+                0x00000488       0xe9 usart.o
 
-.debug_info     0x00000000     0x19f2
+.debug_info     0x00000000     0x1b17
  *(.debug_info)
- .debug_info    0x00000000      0x2f5 parser.o
- .debug_info    0x000002f5      0xb55 Li-ionTester.o
- .debug_info    0x00000e4a      0x606 lcd_lib_2.o
- .debug_info    0x00001450      0x246 buttons.o
- .debug_info    0x00001696      0x35c usart.o
+ .debug_info    0x00000000      0x1a6 74hc595.o
+ .debug_info    0x000001a6      0x2f5 parser.o
+ .debug_info    0x0000049b      0xb14 Li-ionTester.o
+ .debug_info    0x00000faf      0x5c6 lcd_lib_2.o
+ .debug_info    0x00001575      0x246 buttons.o
+ .debug_info    0x000017bb      0x35c usart.o
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev   0x00000000      0x80d
+.debug_abbrev   0x00000000      0x8f5
  *(.debug_abbrev)
- .debug_abbrev  0x00000000      0x143 parser.o
- .debug_abbrev  0x00000143      0x2f7 Li-ionTester.o
- .debug_abbrev  0x0000043a      0x18a lcd_lib_2.o
- .debug_abbrev  0x000005c4      0x10e buttons.o
- .debug_abbrev  0x000006d2      0x13b usart.o
+ .debug_abbrev  0x00000000       0xe8 74hc595.o
+ .debug_abbrev  0x000000e8      0x143 parser.o
+ .debug_abbrev  0x0000022b      0x2f7 Li-ionTester.o
+ .debug_abbrev  0x00000522      0x18a lcd_lib_2.o
+ .debug_abbrev  0x000006ac      0x10e buttons.o
+ .debug_abbrev  0x000007ba      0x13b usart.o
 
-.debug_line     0x00000000     0x1d4c
+.debug_line     0x00000000     0x1e2d
  *(.debug_line)
- .debug_line    0x00000000      0x33d parser.o
- .debug_line    0x0000033d      0xd94 Li-ionTester.o
- .debug_line    0x000010d1      0x4ff lcd_lib_2.o
- .debug_line    0x000015d0      0x376 buttons.o
- .debug_line    0x00001946      0x406 usart.o
+ .debug_line    0x00000000      0x1fc 74hc595.o
+ .debug_line    0x000001fc      0x33d parser.o
+ .debug_line    0x00000539      0xd89 Li-ionTester.o
+ .debug_line    0x000012c2      0x3ef lcd_lib_2.o
+ .debug_line    0x000016b1      0x376 buttons.o
+ .debug_line    0x00001a27      0x406 usart.o
 
-.debug_frame    0x00000000      0x340
+.debug_frame    0x00000000      0x3a0
  *(.debug_frame)
- .debug_frame   0x00000000       0x70 parser.o
- .debug_frame   0x00000070      0x120 Li-ionTester.o
- .debug_frame   0x00000190       0x90 lcd_lib_2.o
- .debug_frame   0x00000220       0x60 buttons.o
- .debug_frame   0x00000280       0xc0 usart.o
+ .debug_frame   0x00000000       0x60 74hc595.o
+ .debug_frame   0x00000060       0x70 parser.o
+ .debug_frame   0x000000d0      0x120 Li-ionTester.o
+ .debug_frame   0x000001f0       0x90 lcd_lib_2.o
+ .debug_frame   0x00000280       0x60 buttons.o
+ .debug_frame   0x000002e0       0xc0 usart.o
 
-.debug_str      0x00000000      0x5db
+.debug_str      0x00000000      0x669
  *(.debug_str)
- .debug_str     0x00000000      0x11a parser.o
+ .debug_str     0x00000000      0x10b 74hc595.o
+                                0x149 (size before relaxing)
+ .debug_str     0x0000010b       0x9d parser.o
                                 0x153 (size before relaxing)
- .debug_str     0x0000011a      0x27e Li-ionTester.o
+ .debug_str     0x000001a8      0x27e Li-ionTester.o
                                 0x384 (size before relaxing)
- .debug_str     0x00000398       0x88 lcd_lib_2.o
+ .debug_str     0x00000426       0x88 lcd_lib_2.o
                                 0x1d6 (size before relaxing)
- .debug_str     0x00000420       0x9a buttons.o
+ .debug_str     0x000004ae       0x9a buttons.o
                                 0x15a (size before relaxing)
- .debug_str     0x000004ba      0x121 usart.o
+ .debug_str     0x00000548      0x121 usart.o
                                 0x203 (size before relaxing)
 
-.debug_loc      0x00000000      0xdc5
+.debug_loc      0x00000000      0xf2b
  *(.debug_loc)
- .debug_loc     0x00000000      0x219 parser.o
- .debug_loc     0x00000219      0x629 Li-ionTester.o
- .debug_loc     0x00000842      0x1f4 lcd_lib_2.o
- .debug_loc     0x00000a36      0x203 buttons.o
- .debug_loc     0x00000c39      0x18c usart.o
+ .debug_loc     0x00000000      0x126 74hc595.o
+ .debug_loc     0x00000126      0x219 parser.o
+ .debug_loc     0x0000033f      0x629 Li-ionTester.o
+ .debug_loc     0x00000968      0x234 lcd_lib_2.o
+ .debug_loc     0x00000b9c      0x203 buttons.o
+ .debug_loc     0x00000d9f      0x18c usart.o
 
 .debug_macinfo
  *(.debug_macinfo)
@@ -731,21 +764,24 @@ OUTPUT(Li-ionTester.elf elf32-avr)
 LOAD linker stubs
 
 .debug_pubtypes
-                0x00000000       0xf1
+                0x00000000      0x10f
  .debug_pubtypes
-                0x00000000       0x2b parser.o
+                0x00000000       0x1e 74hc595.o
  .debug_pubtypes
-                0x0000002b       0x38 Li-ionTester.o
+                0x0000001e       0x2b parser.o
  .debug_pubtypes
-                0x00000063       0x38 lcd_lib_2.o
+                0x00000049       0x38 Li-ionTester.o
  .debug_pubtypes
-                0x0000009b       0x2b buttons.o
+                0x00000081       0x38 lcd_lib_2.o
  .debug_pubtypes
-                0x000000c6       0x2b usart.o
+                0x000000b9       0x2b buttons.o
+ .debug_pubtypes
+                0x000000e4       0x2b usart.o
 
-.debug_ranges   0x00000000      0x1b8
- .debug_ranges  0x00000000       0x38 parser.o
- .debug_ranges  0x00000038       0xa8 Li-ionTester.o
- .debug_ranges  0x000000e0       0x48 lcd_lib_2.o
- .debug_ranges  0x00000128       0x30 buttons.o
- .debug_ranges  0x00000158       0x60 usart.o
+.debug_ranges   0x00000000      0x1e8
+ .debug_ranges  0x00000000       0x30 74hc595.o
+ .debug_ranges  0x00000030       0x38 parser.o
+ .debug_ranges  0x00000068       0xa8 Li-ionTester.o
+ .debug_ranges  0x00000110       0x48 lcd_lib_2.o
+ .debug_ranges  0x00000158       0x30 buttons.o
+ .debug_ranges  0x00000188       0x60 usart.o

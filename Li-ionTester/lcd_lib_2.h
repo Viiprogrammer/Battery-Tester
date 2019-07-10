@@ -16,51 +16,8 @@
 #define LCD_LIB_H
 
 #include "compilers_4.h"
+#include "74hc595.h"
 
-#define VIRT_PORT
-#ifdef VIRT_PORT
-
-//здесь я определил виртуальный порт
-
-//шина данных LCD
-#define LCD_PORT  LCD_DATA, F, _VIRT
-
-#define LCD_DATA_0  A, 0, _NONE
-#define LCD_DATA_1  A, 1, _NONE
-#define LCD_DATA_2  A, 2, _NONE
-#define LCD_DATA_3  A, 5, _NONE
-#define LCD_DATA_4  B, 0, _HI
-#define LCD_DATA_5  D, 5, _HI
-#define LCD_DATA_6  D, 6, _HI
-#define LCD_DATA_7  D, 7, _HI
-
-//управляющие выводы LCD
-#define LCD_RS  B, 4, _HI
-#define LCD_RW  B, 8, _NONE
-#define LCD_EN  B, 3, _HI  
-
-#else
-
-//а здесь я определил реальный порт
-
-//шина данных LCD
-#define LCD_PORT  LCD_DATA, A, _REAL
-
-#define LCD_DATA_0  A, 0, _HI
-#define LCD_DATA_1  A, 1, _HI
-#define LCD_DATA_2  A, 2, _HI
-#define LCD_DATA_3  A, 3, _HI
-#define LCD_DATA_4  A, 4, _HI
-#define LCD_DATA_5  A, 5, _HI
-#define LCD_DATA_6  A, 6, _HI
-#define LCD_DATA_7  A, 7, _HI
-
-//управляющие выводы LCD
-#define LCD_RS  B, 4, _HI
-#define LCD_RW  A, 1, _HI
-#define LCD_EN  D, 7, _HI
-
-#endif
 
 /*____________________________________________________________________*/
 

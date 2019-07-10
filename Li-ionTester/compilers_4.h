@@ -58,7 +58,7 @@
 #define __enable_interrupt()     sei()
 #define __delay_cycles(var)      _delay_us((uint16_t)(var)/(F_CPU/1000000))
 #define delay_us(us) 	         _delay_us(us)
-#define delay_ms(ms)             _delay_ms(ms)	
+#define delay_ms(ms)             _delay_ms(ms)
 #define __swap_nibbles(x)        (((x<<4)&0xf0)|((x>>4)&0x0f))
 
 #define INLINE inline

@@ -1,15 +1,7 @@
 #include "lcd_lib_2.h"
-#include "port_macros.h"
-
+#include "config.h"
 /*макросы для работы с пинами и портом
 при желании их здесь можно переопределить*/
-
-#define LCD_ClearPin(x)             _PM_ClearPin(x)
-#define LCD_SetPin(x)               _PM_SetPin(x)
-#define LCD_DirPort(port, value)    _PM_DirPort(port, value) 
-#define LCD_DirPin(pin, value)      _PM_DirPin(pin, value) 
-#define LCD_WritePort(port, value)  _PM_WritePort(port, value) 
-#define LCD_ReadPort(port, value)   _PM_ReadPort(port, value)
 
 /*________________________________________________________________*/
           
@@ -26,45 +18,45 @@
 void LCD_WriteComInit(uint8_t data)
 {
   delay_us(LCD_DELAY_WAIT);
-  LCD_ClearPin(LCD_RS);  
+  ShiftDigitalWrite(1, LOW, 0); 
   
 #if (LCD_BUS_4_8_BIT == 0)
   data &= 0xf0;
 #endif
   
-  LCD_WritePort(LCD_PORT, data);	
-  LCD_SetPin(LCD_EN);
+  ShiftDigitalWritePort(((ShiftDigitalGetPort(0) & 0b11000011) | (data >> 2)), 0);
+  ShiftDigitalWrite(0, HIGH, 0);
   delay_us(LCD_DELAY_STROB);
-  LCD_ClearPin(LCD_EN);
+  ShiftDigitalWrite(0, LOW, 0);
 }
 
 
 /*общая функция*/
-INLINE static void LCD_CommonFunc(uint8_t data)
+inline static void LCD_CommonFunc(uint8_t data)
 {
 #if (LCD_BUS_4_8_BIT == 0) 
   
   uint8_t tmp; 
   tmp = (data & 0xf0);
-  LCD_WritePort(LCD_PORT, tmp);
-  LCD_SetPin(LCD_EN);
+  ShiftDigitalWritePort(((ShiftDigitalGetPort(0) & 0b11000011) | (tmp >> 2)), 0);
+  ShiftDigitalWrite(0, HIGH, 0);
   delay_us(LCD_DELAY_STROB);
-  LCD_ClearPin(LCD_EN);
+  ShiftDigitalWrite(0, LOW, 0);
 
   data = __swap_nibbles(data); 
   tmp = (data & 0xf0);
     
-  LCD_WritePort(LCD_PORT, tmp);
-  LCD_SetPin(LCD_EN);
+  ShiftDigitalWritePort(((ShiftDigitalGetPort(0) & 0b11000011) | (tmp >> 2)), 0);
+  ShiftDigitalWrite(0, HIGH, 0);
   delay_us(LCD_DELAY_STROB);
-  LCD_ClearPin(LCD_EN);
+  ShiftDigitalWrite(0, LOW, 0);
   
 #else 
   
   LCD_WritePort(LCD_PORT, data);
-  LCD_SetPin(LCD_EN);
+  ShiftDigitalWrite(0, HIGH, 0);
   delay_us(LCD_DELAY_STROB);
-  LCD_ClearPin(LCD_EN);
+  ShiftDigitalWrite(0, LOW, 0);
   
 #endif
 }
@@ -79,17 +71,17 @@ INLINE static void LCD_Wait(void)
   LCD_DirPort(LCD_PORT, 0x00);
   LCD_WritePort(LCD_PORT, 0xff);
   LCD_SetPin(LCD_RW);
-  LCD_ClearPin(LCD_RS);
+  ShiftDigitalWrite(1, LOW, 0);
   do{
-    LCD_SetPin(LCD_EN);
+    ShiftDigitalWrite(0, HIGH, 0);
     delay_us(LCD_DELAY_STROB);
     LCD_ReadPort(LCD_PORT, data);
-    LCD_ClearPin(LCD_EN);  
+    ShiftDigitalWrite(0, LOW, 0);
    
-    LCD_SetPin(LCD_EN);
+    ShiftDigitalWrite(0, HIGH, 0);
     delay_us(LCD_DELAY_STROB);
     LCD_ReadPort(LCD_PORT, tmp);
-    LCD_ClearPin(LCD_EN);  
+    ShiftDigitalWrite(0, LOW, 0); 
     
   } while((data & (1<<LCD_FL_BF))!= 0);
   LCD_ClearPin(LCD_RW);
@@ -101,12 +93,12 @@ INLINE static void LCD_Wait(void)
   LCD_DirPort(LCD_PORT, 0x00);
   LCD_WritePort(LCD_PORT, 0xff);
   LCD_SetPin(LCD_RW);
-  LCD_ClearPin(LCD_RS);
+  ShiftDigitalWrite(1, LOW, 0);
   do{
-     LCD_SetPin(LCD_EN);
+     ShiftDigitalWrite(0, HIGH, 0);
      delay_us(LCD_DELAY_STROB);
      LCD_ReadPort(LCD_PORT, data);
-     LCD_ClearPin(LCD_EN);
+     ShiftDigitalWrite(0, LOW, 0);
   } while((data & (1<<LCD_FL_BF))!= 0);
   LCD_ClearPin(LCD_RW);
   LCD_DirPort(LCD_PORT, 0xff);
@@ -121,7 +113,7 @@ INLINE static void LCD_Wait(void)
 void LCD_WriteCom(uint8_t data)
 {
   LCD_Wait();
-  LCD_ClearPin(LCD_RS);	
+  ShiftDigitalWrite(1, LOW, 0);
   LCD_CommonFunc(data);
 }
 
@@ -129,20 +121,13 @@ void LCD_WriteCom(uint8_t data)
 void LCD_WriteData(char data)
 {
   LCD_Wait();
-  LCD_SetPin(LCD_RS);	    
+  ShiftDigitalWrite(1, HIGH, 0);    
   LCD_CommonFunc(data);
 }
 
 /*функция инициализации*/
 void LCD_Init(void)
-{
-  LCD_DirPort(LCD_PORT, 0xff);
-  LCD_DirPin(LCD_RS, _OUT);
-  LCD_DirPin(LCD_RW, _OUT);  
-  LCD_DirPin(LCD_EN, _OUT);
-  
-  delay_ms(40);
-  
+{  
   LCD_WriteComInit(LCD_COM_INIT_1); 
   delay_ms(10);
   LCD_WriteComInit(LCD_COM_INIT_1);
