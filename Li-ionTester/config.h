@@ -9,9 +9,19 @@
 	#define NO_BATTERY_VALUE 0.1 //Все что ниже не считает за наличие акб
 	#define CHARGE_TRIGGER_VALUE 4 //Значиние при котором считать акб заряженым (доп проверка кроме светодиода TP4056) 4V - 899
 	#define CHARGE_DIALOG_VALUE 4.05 //Ниже какогого напряжения выводить предложение зарядки?
-	#define BATTERY_CRITICAL_TEMP_VALUE 600
-	#define CURRENT_MUX_CHANNEL 1
+	#define BATTERY_CRITICAL_TEMP_VALUE 630
+	
+	#define COOLER_MAX_PWM_TEMP 
+	#define COOLER_MIN_PWM 512
+	#define COOLER_ON_TEMP_VALUE 475
+	#define COOLER_OFF_TEMP_VALUE 345
+	
 	#define VOLTAGE_MUX_CHANNEL 0
+	#define CURRENT_MUX_CHANNEL 1
+	#define COOLER_TEMP_MUX_CHANNEL 2
+	#define BATTERY_TEMP_MUX_CHANNEL 5
+	
+	
 	#define VOLTAGE_DIALOG 1
 	#define AMPERAGE_DIALOG 2
 	
@@ -46,4 +56,5 @@
 	#include <avr/wdt.h>
 	#include <stdlib.h>
 	#include <stdbool.h>
+	#include <math.h>
 #endif //CONFIG_H

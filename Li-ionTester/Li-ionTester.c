@@ -62,7 +62,8 @@ bool pause_status = false;
 unsigned long eeLastCapacity EEMEM = 0;
 unsigned long eeI EEMEM = 1000;
 unsigned long eeEND_Voltage EEMEM = 2500;
-
+unsigned int cooler = 0;
+bool start_cool = false;
 const uint8_t leftArrow [] PROGMEM = {	
 	0b00010,
 	0b00100,
@@ -188,7 +189,23 @@ void printVoltage(unsigned long val)
 	}
 }
 /* Конец долбоебизма */
-
+long map(long x, long in_min, long in_max, long out_min, long out_max)
+{
+	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+void coolerCalc(){
+	cooler = read_adc(COOLER_TEMP_MUX_CHANNEL);
+	if(cooler >= COOLER_ON_TEMP_VALUE && !start_cool){
+		start_cool = true;
+	}
+	if(cooler <= COOLER_OFF_TEMP_VALUE && start_cool){
+		start_cool = false;
+		OCR1B = 0;
+	}
+	if(start_cool){
+		OCR1B = map(cooler, 0, 1024, COOLER_MIN_PWM, 1023);
+	}
+}
 void checkBattery(bool clear, bool test)
 {
    if(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){
@@ -204,7 +221,7 @@ void checkBattery(bool clear, bool test)
 		 //Включение таймера времени
 		 TIMSK &= ~(1 << TOIE2);
 	 }
-	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){}
+	 while(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(NO_BATTERY_VALUE)){coolerCalc();}
      if(test){
 		 //Подключение АКБ
 		 BATTERY_ON;
@@ -224,11 +241,11 @@ void Reset_Button(){
 	       BUT_Poll();
 	       i = BUT_GetBut();
 	       button_event = BUT_GetBut();
+		   coolerCalc();
        }
 }
-
 void checkTempPotection(){
-	if(read_adc(5) >= BATTERY_CRITICAL_TEMP_VALUE){
+	if(read_adc(BATTERY_TEMP_MUX_CHANNEL) >= BATTERY_CRITICAL_TEMP_VALUE){
 		 LCD_Clear();
 		 LCD_Goto(0,0);
 		 LCD_SendStr("High temperature");
@@ -281,6 +298,7 @@ void Charge_battery(bool end)
 	  LCD_Goto(4,0);
 	  LCD_SendStr("Charging");
 	  if(end){
+	   coolerCalc();
 	   printCapacity(Capacity/3600, true, false);
 	  }
 	  checkBattery(true, false);
@@ -391,7 +409,7 @@ int main()
    BUT_Init();
    USART_Init(USART_DOUBLED, 9600);
    PARS_Init();
-   ShiftRegisterInit();
+   ShiftRegisterInit(1);
    LCD_Init();
    t2_init();
    //ADC Init
@@ -400,7 +418,7 @@ int main()
    USART_SendStr("Initializing...\r\n");
    
    //Конфиг ножек
-   DDRB |= (1 << PB1);
+   DDRB |= (1 << PB1) | (1 << PB2);
    DDRC &= ~((1 << PC0) | (1 << PC1) | (1 << PC3) | (1 << PC5));
 
    LCD_SetUserChar(leftArrow, 0);
@@ -473,11 +491,11 @@ int main()
    USART_SendStr("Seconds | Voltage | Amperage | Time | mAh\r\n");
   
    //ШИМ электронной нагрузки
-   TCCR1A |= (1 << COM1A1);
+   TCCR1A |= (1 << COM1A1) | (1 << COM1B1);
    TCCR1A |= (1 << WGM11) | (1 << WGM10);
    TCCR1B |= (1 << CS11);
    OCR1A = 40*(I_set/100)+4*(I_set/100);
-   
+   OCR1B = 0;
    //Подключение АКБ
    BATTERY_ON;
    
@@ -489,6 +507,7 @@ int main()
    
    while(1)
    {   
+	   coolerCalc();
 	   checkBattery(true, true);
 	   //Темапературная  защита
 	   checkTempPotection();
@@ -555,6 +574,8 @@ int main()
 	  BUT_Poll();
       i = BUT_GetBut();
       button_event = BUT_GetBut();
+	  
+	  //PAUSE
       if(i == ENTER_BUTTON_ID && button_event == BUT_PRESSED_CODE){
 	   OCR1A = 0;
        //Отключение АКБ
@@ -571,6 +592,7 @@ int main()
           BUT_Poll();
           i = BUT_GetBut();
           button_event = BUT_GetBut();
+		  coolerCalc();
 	   }
 	   USART_SendStr("Initializing...\r\n");
 	   //PWM Calc
