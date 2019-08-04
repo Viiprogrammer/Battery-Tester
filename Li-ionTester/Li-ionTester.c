@@ -58,7 +58,11 @@ uint16_t int_buffer = 0;
 uint8_t V_ = 0;
 bool value_parsed_success = false;
 bool pause_status = false;
+unsigned long PauseSave[2]={0};
+unsigned char pause_continue = 0;
 //EEPROM
+unsigned long EEMEM eePauseSave[2]={0};
+unsigned char EEMEM eepause_continue = 0;
 unsigned long eeLastCapacity EEMEM = 0;
 unsigned long eeI EEMEM = 1000;
 unsigned long eeEND_Voltage EEMEM = 2500;
@@ -437,53 +441,83 @@ int main()
 
    checkBattery(false, false);
    
-   //Диалог зарядки 
-   if(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(CHARGE_DIALOG_VALUE)){
-	 LCD_Clear();
-     LCD_Goto(0,0);
-     LCD_SendStr("Charge");
-	 LCD_Goto(0,1);
-	 LCD_SendStr("the battery?");
-	 USART_SendStr("Charge the battery? (Y/N)\r\n");
-	 while(1){
-	     i = BUT_GetBut();
-	     button_event = BUT_GetBut();
-		 one_char_buffer = USART_GetChar();
-		 
-		 if((i == PLUS_UP_ID  && button_event == BUT_PRESSED_CODE) || one_char_buffer == 'Y' || one_char_buffer == 'y'){
-	       charge_before = true;
-		   break;
-		 }
+   if(eeprom_read_byte(&eepause_continue) == 1){
+	   	   LCD_Clear();
+	   	   LCD_Goto(0,0);
+	   	   LCD_SendStr("Continue test?");
+	   	   USART_SendStr("Continue test? (Y/N)\r\n");
+	   	   while(1){
+		   	   i = BUT_GetBut();
+		   	   button_event = BUT_GetBut();
+		   	   one_char_buffer = USART_GetChar();
+		   	   
+		   	   if((i == PLUS_UP_ID  && button_event == BUT_PRESSED_CODE) || one_char_buffer == 'Y' || one_char_buffer == 'y'){
+			   	   pause_continue = 1;
+			   	   break;
+		   	   }
 
-	     if(((i == MINUS_DOWN_ID  && button_event == BUT_PRESSED_CODE) || (i == ENTER_BUTTON_ID  && button_event == BUT_PRESSED_CODE)) || one_char_buffer == 'N' || one_char_buffer == 'n'){
-		   charge_before = false;
-		   break;
-		 }
-         BUT_Poll();
-     }
-     LCD_Clear();
+		   	   if(((i == MINUS_DOWN_ID  && button_event == BUT_PRESSED_CODE) || (i == ENTER_BUTTON_ID  && button_event == BUT_PRESSED_CODE)) || one_char_buffer == 'N' || one_char_buffer == 'n'){
+			   	   eeprom_write_byte(&eepause_continue, 0);
+				   pause_continue = 0;
+			   	   break;
+		   	   }
+		   	   BUT_Poll();
+	   	   }
+	   	   LCD_Clear();
    }
+   if(pause_continue == 0){ 
+	   //Диалог зарядки 
+	   if(read_adc(VOLTAGE_MUX_CHANNEL) < CALC_ADC_VOLTAGE(CHARGE_DIALOG_VALUE)){
+		 LCD_Clear();
+		 LCD_Goto(0,0);
+		 LCD_SendStr("Charge");
+		 LCD_Goto(0,1);
+		 LCD_SendStr("the battery?");
+		 USART_SendStr("Charge the battery? (Y/N)\r\n");
+		 while(1){
+			 i = BUT_GetBut();
+			 button_event = BUT_GetBut();
+			 one_char_buffer = USART_GetChar();
+		 
+			 if((i == PLUS_UP_ID  && button_event == BUT_PRESSED_CODE) || one_char_buffer == 'Y' || one_char_buffer == 'y'){
+			   charge_before = true;
+			   break;
+			 }
 
-  //Установка параметров
-  printVADialig(&eeI, AMPERAGE_STEP, "Current:", &I_set, 4, AMPERAGE_MIN, AMPERAGE_MAX, "\r\nSend value 100-2000 with step 100 (or send ok):\r\n", "Default value:", AMPERAGE_DIALOG);
-  printVADialig(&eeEND_Voltage, VOLTAGE_STEP, "End voltage:", &END_Voltage, 2, VOLTAGE_MIN, VOLTAGE_MAX, "\r\nSend value 2500-3500 with step 100 (or send ok):\r\n", "Default value:", VOLTAGE_DIALOG);
+			 if(((i == MINUS_DOWN_ID  && button_event == BUT_PRESSED_CODE) || (i == ENTER_BUTTON_ID  && button_event == BUT_PRESSED_CODE)) || one_char_buffer == 'N' || one_char_buffer == 'n'){
+			   charge_before = false;
+			   break;
+			 }
+			 BUT_Poll();
+		 }
+		 LCD_Clear();
+	   }
 
-  //Зарядка перед тестом
-  if(charge_before){
-     LCD_Clear();
-     Charge_battery(false);
-  }
+	  //Установка параметров
+	  printVADialig(&eeI, AMPERAGE_STEP, "Current:", &I_set, 4, AMPERAGE_MIN, AMPERAGE_MAX, "\r\nSend value 100-2000 with step 100 (or send ok):\r\n", "Default value:", AMPERAGE_DIALOG);
+	  printVADialig(&eeEND_Voltage, VOLTAGE_STEP, "End voltage:", &END_Voltage, 2, VOLTAGE_MIN, VOLTAGE_MAX, "\r\nSend value 2500-3500 with step 100 (or send ok):\r\n", "Default value:", VOLTAGE_DIALOG);
 
-   USART_SendStr("Press any key to start the test...\r\n");
+	  //Зарядка перед тестом
+	  if(charge_before){
+		 LCD_Clear();
+		 Charge_battery(false);
+	  }
 
-   LCD_Goto(0,0);
-   LCD_SendStr("Press start to");
-   LCD_Goto(0,1);
-   LCD_SendStr("begin the test");
-   
-   
-   Reset_Button();
+	   USART_SendStr("Press any key to start the test...\r\n");
 
+	   LCD_Goto(0,0);
+	   LCD_SendStr("Press start to");
+	   LCD_Goto(0,1);
+	   LCD_SendStr("begin the test");
+	   
+	   
+	   Reset_Button();
+	}else{
+		eeprom_read_block ((void *)&PauseSave, (const void *)&eePauseSave, 8);
+		eeprom_write_byte(&eepause_continue, 0);
+		Capacity = PauseSave[0];
+		seconds_timer2 = PauseSave[1];
+	}
 
    USART_SendStr("Starting...\r\n");
    LCD_Clear();
@@ -582,6 +616,10 @@ int main()
 	   BATTERY_OFF;
 	   //Выключение таймера времени
 	   TIMSK &= ~(1 << TOIE2);
+	   PauseSave[0] = Capacity;
+	   PauseSave[1] = seconds();
+	   eeprom_write_byte(&eepause_continue, 1);
+	   eeprom_write_block ((const void *)&PauseSave, (void *)&eePauseSave, 8);
 	   USART_SendStr("Test suspended\r\n");
 
 	   LCD_Goto(9, 1);
@@ -594,6 +632,7 @@ int main()
           button_event = BUT_GetBut();
 		  coolerCalc();
 	   }
+	   eeprom_write_byte(&eepause_continue, 0);
 	   USART_SendStr("Initializing...\r\n");
 	   //PWM Calc
 	   OCR1A = 40*(I_set/100)+4*(I_set/100);
