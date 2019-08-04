@@ -1,5 +1,7 @@
 # Тестер емкости аккумуляторов
 
+![Circruit](https://github.com/Viiprogrammer/Battery-Tester/blob/master/Li-ionTester.BMP?raw=true)
+
 Функционал:
   - Измерение емкости акумуляторов Li-ion/Po типа:
     - Выбор тока 0.1-2А с шагом 0.1А
@@ -19,7 +21,8 @@
   - Возможность возобновления теста если отключить питание на паузе
   
 # Конфигурация и настройка
-  `cofig.h:`
+
+  ## Калибровка и настроки тестов и заряда в `config.h`
   
   | Defile name   |     Value     |     Type     |
   | ------------- | ------------- | ------------- |
@@ -42,3 +45,14 @@
   | BATTERY_OFF  | Дефайн отключения батареи от нагрузки | None |
   | TP4056_ON  | Дефайн включения TP4056 подачей сигнала на CE | None |
   | TP4056_OFF  | Дефайн выключения TP4056 подачей сигнала на CE | None |
+  
+## Настройка Выводов дисплея в `74hc595.h`
+  | Defile name   |     Shift register pin     | 
+  | ------------- | ------------- |
+  | DATA, DATA_DDR, DATA_PORT  | DS Pin  |
+  | SCK, SCK_DDR, SCK_PORT  | SH_CP (SLK) Pin  |
+  | LATCH, LATCH_DDR, LATCH_PORT  | ST_CP (LATCH) Pin |
+  
+  
+## Настройка кнопок в `buttons.h`
+  
