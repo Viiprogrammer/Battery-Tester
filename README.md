@@ -47,7 +47,9 @@
   | TP4056_OFF  | Дефайн выключения TP4056 подачей сигнала на CE | None |
   
 ## Настройка Выводов дисплея в `74hc595.h`
-  | Defile name   |     Shift register pin     | 
+
+
+  | Defile name | Shift register pin | 
   | ------------- | ------------- |
   | DATA, DATA_DDR, DATA_PORT  | DS Pin  |
   | SCK, SCK_DDR, SCK_PORT  | SH_CP (SLK) Pin  |
