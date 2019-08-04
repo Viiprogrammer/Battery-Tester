@@ -1,13 +1,3 @@
-/*
-  Реализовать выбор напряжения оконьчания теста
-  TP4056 зарядка, отслеживание зарядки по 2ум светодиодам 
-   - пауза теста 
-   - индикация нажатия кнопок если работает то зеленый если нет то красный (есть звуковая)
-   - хардвар защита по температуре (есть софтвар)
-   - Добавить защиту от переполюсовки, и индикацию неверного подключения
-   - Прицепить энкодер
-*/
-
 #define soft_reset()        \
 do                          \
 {                           \
@@ -46,9 +36,9 @@ unsigned long
   
 unsigned int 
   //Напряжение выключения
-  END_Voltage = 2500,
+  END_Voltage = VOLTAGE_MIN,
   //Установленный ток
-  I_set = 1000;
+  I_set = AMPERAGE_MIN;
   
 char i = 0;
 char button_event = 0;
@@ -64,8 +54,8 @@ unsigned char pause_continue = 0;
 unsigned long EEMEM eePauseSave[2]={0};
 unsigned char EEMEM eepause_continue = 0;
 unsigned long eeLastCapacity EEMEM = 0;
-unsigned long eeI EEMEM = 1000;
-unsigned long eeEND_Voltage EEMEM = 2500;
+unsigned long eeI EEMEM = AMPERAGE_MIN;
+unsigned long eeEND_Voltage EEMEM = VOLTAGE_MIN;
 unsigned int cooler = 0;
 bool start_cool = false;
 const uint8_t leftArrow [] PROGMEM = {	
@@ -147,7 +137,7 @@ unsigned int read_adc(unsigned char adc_input)
 }
 
 /*
-  Подзалупные функции для экономии памяти 
+  Функции для экономии памяти 
 */
 void printUL(char i)
 {
@@ -207,7 +197,7 @@ void coolerCalc(){
 		OCR1B = 0;
 	}
 	if(start_cool){
-		OCR1B = map(cooler, 0, 1024, COOLER_MIN_PWM, 1023);
+		OCR1B = map(cooler, 0, 1023, COOLER_MIN_PWM, 1023);
 	}
 }
 void checkBattery(bool clear, bool test)
@@ -232,7 +222,7 @@ void checkBattery(bool clear, bool test)
 		 //Включение таймера времени
 		 TIMSK |= (1 << TOIE2);
 		 //PWM Calc
-		 OCR1A = 40*(I_set/100)+4*(I_set/100);
+		 OCR1A = AMPERAGE_PWM_COEFFICIENT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP)+AMPERAGE_PWM_COEFFICIENT_CORRECT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP);
 	 }
 	 if(clear) LCD_Clear();
    }
@@ -528,7 +518,7 @@ int main()
    TCCR1A |= (1 << COM1A1) | (1 << COM1B1);
    TCCR1A |= (1 << WGM11) | (1 << WGM10);
    TCCR1B |= (1 << CS11);
-   OCR1A = 40*(I_set/100)+4*(I_set/100);
+   OCR1A = AMPERAGE_PWM_COEFFICIENT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP)+AMPERAGE_PWM_COEFFICIENT_CORRECT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP);
    OCR1B = 0;
    //Подключение АКБ
    BATTERY_ON;
@@ -635,7 +625,7 @@ int main()
 	   eeprom_write_byte(&eepause_continue, 0);
 	   USART_SendStr("Initializing...\r\n");
 	   //PWM Calc
-	   OCR1A = 40*(I_set/100)+4*(I_set/100);
+	   OCR1A = AMPERAGE_PWM_COEFFICIENT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP)+AMPERAGE_PWM_COEFFICIENT_CORRECT*(I_set/AMPERAGE_PWM_COEFFICIENT_STEP);
 	   
 	   //Подключение АКБ
 	   BATTERY_ON;

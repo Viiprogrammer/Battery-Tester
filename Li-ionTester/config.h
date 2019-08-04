@@ -33,19 +33,17 @@
 	#define AMPERAGE_MIN 100
 	#define AMPERAGE_STEP 100
 	
+	#define AMPERAGE_PWM_COEFFICIENT 40
+	#define AMPERAGE_PWM_COEFFICIENT_CORRECT 4
+	#define AMPERAGE_PWM_COEFFICIENT_STEP 100
+	
 	#define ENTER_BUTTON_ID 1
 	#define PLUS_UP_ID 2
 	#define MINUS_DOWN_ID 3
-	
-	#define HIGH 1
-	#define LOW 0
-	
+		
 	#define BATTERY_ON ShiftDigitalWrite(6, HIGH, 0);
-	
 	#define BATTERY_OFF ShiftDigitalWrite(6, LOW, 0);
-
 	#define TP4056_ON ShiftDigitalWrite(7, HIGH, 0);
-	
 	#define TP4056_OFF ShiftDigitalWrite(7, LOW, 0);
 	
 	#include <avr/io.h>
