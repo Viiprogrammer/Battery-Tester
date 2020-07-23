@@ -9,7 +9,7 @@
 	#define NO_BATTERY_VALUE 0.1 //Все что ниже не считает за наличие акб
 	#define CHARGE_TRIGGER_VALUE 4 //Значиние при котором считать акб заряженым (доп проверка кроме светодиода TP4056) 4V - 899
 	#define CHARGE_DIALOG_VALUE 4.05 //Ниже какогого напряжения выводить предложение зарядки?
-	#define BATTERY_CRITICAL_TEMP_VALUE 630
+	#define BATTERY_CRITICAL_TEMP_VALUE 1024
 	
 	#define COOLER_MAX_PWM_TEMP 
 	#define COOLER_MIN_PWM 512

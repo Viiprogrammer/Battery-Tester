@@ -55,6 +55,7 @@ unsigned long EEMEM eePauseSave[2]={0};
 unsigned char EEMEM eepause_continue = 0;
 unsigned long eeLastCapacity EEMEM = 0;
 unsigned long eeI EEMEM = AMPERAGE_MIN;
+unsigned long CountTestsComplete EEMEM = 0;
 unsigned long eeEND_Voltage EEMEM = VOLTAGE_MIN;
 unsigned int cooler = 0;
 bool start_cool = false;
@@ -324,6 +325,7 @@ void checkEndVoltage(){
 
 		LCD_Clear();
 		LCD_Goto(1,0);
+		eeprom_write_dword(&CountTestsComplete, eeprom_read_dword(&CountTestsComplete)+1);
 		LCD_SendStr("Test completed");
 		USART_SendStr("Test completed\r\n");
 		
